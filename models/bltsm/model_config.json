@@ -1,0 +1,14 @@
+{
+  "vocab_size": 18414,
+  "embedding_dim": 128,
+  "lstm_units": 128,
+  "num_classes": 5,
+  "max_seq_len": 80,
+  "classes": [
+    "Bored",
+    "Confident",
+    "Confused",
+    "Curious",
+    "Frustrated"
+  ]
+}

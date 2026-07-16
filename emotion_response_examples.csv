@@ -1,0 +1,150 @@
+text,emotion,confidence,response,field,timestamp
+I'm interested in exploring this concept further.,curious,0.9936907467592474,Love the curiosity! Here's a bit more detail on how this works...,Computer Science,2026-07-12T23:10:37.886760
+This assignment is driving me crazy.,frustrated,0.6576,"AI response unavailable: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. 
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_input_token_count, limit: 0, model: gemini-2.0-flash
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash
+Please retry in 49.667298973s. [links {
+  description: ""Learn more about Gemini API quotas""
+  url: ""https://ai.google.dev/gemini-api/docs/rate-limits""
+}
+, violations {
+  quota_metric: ""generativelanguage.googleapis.com/generate_content_free_tier_input_token_count""
+  quota_id: ""GenerateContentInputTokensPerModelPerMinute-FreeTier""
+  quota_dimensions {
+    key: ""model""
+    value: ""gemini-2.0-flash""
+  }
+  quota_dimensions {
+    key: ""location""
+    value: ""global""
+  }
+}
+violations {
+  quota_metric: ""generativelanguage.googleapis.com/generate_content_free_tier_requests""
+  quota_id: ""GenerateRequestsPerMinutePerProjectPerModel-FreeTier""
+  quota_dimensions {
+    key: ""model""
+    value: ""gemini-2.0-flash""
+  }
+  quota_dimensions {
+    key: ""location""
+    value: ""global""
+  }
+}
+violations {
+  quota_metric: ""generativelanguage.googleapis.com/generate_content_free_tier_requests""
+  quota_id: ""GenerateRequestsPerDayPerProjectPerModel-FreeTier""
+  quota_dimensions {
+    key: ""model""
+    value: ""gemini-2.0-flash""
+  }
+  quota_dimensions {
+    key: ""location""
+    value: ""global""
+  }
+}
+, retry_delay {
+  seconds: 49
+}
+]",Computer Science,2026-07-13T07:53:08.962116
+This assignment is driving me crazy.,frustrated,0.6576,"AI response unavailable: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. 
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_input_token_count, limit: 0, model: gemini-2.0-flash
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash
+Please retry in 28.243282776s. [links {
+  description: ""Learn more about Gemini API quotas""
+  url: ""https://ai.google.dev/gemini-api/docs/rate-limits""
+}
+, violations {
+  quota_metric: ""generativelanguage.googleapis.com/generate_content_free_tier_input_token_count""
+  quota_id: ""GenerateContentInputTokensPerModelPerMinute-FreeTier""
+  quota_dimensions {
+    key: ""model""
+    value: ""gemini-2.0-flash""
+  }
+  quota_dimensions {
+    key: ""location""
+    value: ""global""
+  }
+}
+violations {
+  quota_metric: ""generativelanguage.googleapis.com/generate_content_free_tier_requests""
+  quota_id: ""GenerateRequestsPerMinutePerProjectPerModel-FreeTier""
+  quota_dimensions {
+    key: ""model""
+    value: ""gemini-2.0-flash""
+  }
+  quota_dimensions {
+    key: ""location""
+    value: ""global""
+  }
+}
+violations {
+  quota_metric: ""generativelanguage.googleapis.com/generate_content_free_tier_requests""
+  quota_id: ""GenerateRequestsPerDayPerProjectPerModel-FreeTier""
+  quota_dimensions {
+    key: ""model""
+    value: ""gemini-2.0-flash""
+  }
+  quota_dimensions {
+    key: ""location""
+    value: ""global""
+  }
+}
+, retry_delay {
+  seconds: 28
+}
+]",Computer Science,2026-07-13T07:57:30.387346
+This assignment is driving me crazy.,frustrated,0.6576,"It's okay to feel stuck sometimes—this is a common challenge in learning.  
+
+Try focusing on one small part of the problem at a time instead of tackling everything all at once.  
+
+Take a short break and then come back to the problem with fresh eyes—small progress can build confidence.",Computer Science,2026-07-13T09:05:20.457752
+The instructions are not clear to me.,curious,0.5365,Excellent question! Here's more in-depth information...,Computer Science,2026-07-13T12:42:42.187631
+"I keep reading this, but it still doesn't make sense.",frustrated,0.9874,I understand this is frustrating! Let's try a simpler approach...,Computer Science,2026-07-13T12:43:17.854864
+"I keep reading this, but it still doesn't make sense.",frustrated,0.9874,I understand this is frustrating! Let's try a simpler approach...,Computer Science,2026-07-13T12:43:23.353178
+Nothing in today's lesson is keeping my attention.,bored,0.9999,Let's make this more engaging. Here are some interactive exercises...,Computer Science,2026-07-13T12:44:27.205865
+Nothing in today's lesson is keeping my attention.,bored,0.9999,"I hear how easy it can be to lose focus when studies feel routine. Try breaking down your CS tasks into smaller chunks and tackle one concept at a time—like explaining a loop or debugging a small code snippet out loud—it often makes a difference! Next, pick a fun coding challenge from a site like Codewars or LeetCode to use tomorrow—small wins can keep motivation rolling.",Computer Science,2026-07-13T12:45:06.118017
+"I keep reading this, but it still doesn't make sense.",frustrated,0.9874,"It's completely normal to feel stuck when a concept won't click — even experienced developers hit this wall all the time.
+
+Try explaining the concept out loud in your own words as if teaching it to a beginner, or draw a quick diagram of how the data flows — putting it into your own format often reveals what's missing.
+
+Pick just one small piece to focus on right now, and if it still feels fuzzy after 15 minutes, step away and come back fresh — your brain keeps working on it in the background.",Computer Science,2026-07-13T12:50:01.023217
+I'm interested in exploring this concept further.,curious,0.9635,"1. It is great that you are feeling curious and want to explore this concept further.
+2. A useful Computer Science strategy is to code a small example that applies the concept, because hands-on practice helps clarify how it works.
+3. Try writing a short script based on this idea in your next study session to build your confidence.",Computer Science,2026-07-14T06:41:51.883895
+What happens if we change this variable?,curious,0.4967,"That's a great question to explore I'm glad you're curious about how code works. When you change a variable (like its value or data type), it can directly impact what your program outputs or how it behaves, especially if that variable is used in calculations or decisions elsewhere.  
+
+Try writing a simple program (like a calculator or a counter) and change one variable to see what happens. Run it and observe the results this hands-on experiment will help you understand how variables influence your code's logic.  
+
+Once you see the outcome, tweak the code again and compare results. Experimenting like this builds intuition over time.",Computer Science,2026-07-14T06:54:25.087054
+What happens if we change this variable?,curious,0.4967,It's completely normal to feel curious—and a little unsure—when exploring how changes to variables affect code. That curiosity is actually a great sign you’re thinking deeply about how programming works! A helpful tip is to use print statements or a debugger to see the variable’s value before and after the change. This makes it easier to track what’s happening step by step. Try modifying the variable in small ways and see how the program’s output shifts—every experiment brings you closer to understanding!,Computer Science,2026-07-14T06:54:37.475887
+I'd like to know how this works in real-world applications.,confident,0.9354,Great! You're making excellent progress! Ready for the next challenge?,Computer Science,2026-07-14T07:00:47.204984
+"Nothing in today's lesson is keeping my attention.""",bored,0.9999,"I totally get that—sometimes lessons can feel too slow or repetitive.  
+
+Try skimming ahead to see what comes next—you might find a concept that clicks better.  
+
+Next, pick one small thing from today’s lesson to quiz yourself on later—even 5 minutes of practice can rebuild focus.",Computer Science,2026-07-14T08:59:26.263998
+"Class is bording and i got hactick
+",bored,0.866,"It’s normal to feel bored when stuck, especially in CS. Try breaking the problem into smaller steps to focus on one task at a time. Next, try a quick 10-minute challenge like debugging a small code snippet to reset your focus.",Computer Science,2026-07-14T13:22:38.967150
+"Today is final day of the college and me and my leave the college today
+
+",frustrated,1.0,"I understand feeling frustrated about leaving—it’s bittersweet to say goodbye.  
+
+A specific tip: spend 10 minutes organizing your code projects with clear comments or documentation.  
+
+Your next step: review what you’ve learned this semester and plan how to build on it—even a small project can help.",Computer Science,2026-07-14T13:23:24.352188
+"Today is final day of the college and me and my friends leave the college we are so excited.
+
+",frustrated,1.0,"I hear that frustration mixed with excitement as you finish up—it's totally normal to feel both after finals.  
+One helpful CS tip: start using GitHub for even small personal projects now; it builds a habit that’ll make job transitions smoother later.  
+Take 10 minutes today to text your friends about celebrating—just a quick plan to grab coffee or walk somewhere fun together.",Computer Science,2026-07-14T13:24:38.439391
+The lecture is moving too slowly for me.,bored,0.9608,"It’s totally valid to feel this way when the pace doesn’t match your pace—slow lectures can be tough. Try applying what you’re learning to a small project or problem you’re curious about. Next, take 10 minutes to explore one concept you’re intrigued by and see if playing with it helps spark engagement.",Computer Science,2026-07-14T13:26:35.429112
+Nothing I do seems to improve my score.,curious,0.6376,"I understand how frustrating it can feel when your efforts don't seem to pay off. In Computer Science, try breaking problems into smaller steps and testing your code incrementally instead of only focusing on the final result. Pick one small concept or problem you're stuck on and solve it today – progress comes from consistent, focused effort, not grand gestures.",Computer Science,2026-07-14T13:27:58.235208
+Nothing I do seems to improve my score.,curious,0.6376,I’m sorry you’re feeling stuck — that frustration when progress feels slow is totally normal in coding and problem-solving. Try debugging by writing down your logic or using print statements to catch hidden errors. Pick one small problem to re-solve from scratch with fresh eyes — even tiny wins build momentum!,Computer Science,2026-07-14T13:28:33.896983
+i wrote the exam well,confident,0.9032,"That’s great to hear! Your hard work really paid off. One tip: after the exam, briefly review any tricky problems you solved to reinforce your understanding. Next, celebrate your success, then keep building your skills with small coding projects to stay sharp. You’ve got this!",Computer Science,2026-07-15T19:54:18.268232
+Can this concept be applied in real life?,curious,0.9065,"I see you’re excited about how this idea can be applied in real life. When you study algorithms, try coding a tiny project that uses the concept you just learned, like building a to‑do list app to see how data structures work in action. Next, sketch out a simple application for something you care about and share it with a classmate to get feedback and keep the momentum going.",Computer Science,2026-07-15T19:55:22.301818
+i'm not sure where to start solving this questions.,confident,0.9962,"1. It is great that you are feeling confident as you approach this math problem.
+2. A helpful strategy is to list the known values and identify the specific formula that connects them.
+3. Try writing the problem in your own words to find one small, clear first step to take.",Mathematics,2026-07-15T21:24:51.310081
