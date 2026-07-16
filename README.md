@@ -93,7 +93,23 @@ emotion-detection/
 ```bash
 cd emotion-detection
 ```
+## Download the models from the give drive link
+```bash
+https://drive.google.com/drive/folders/1kHzwujBOwvrzhwdQx_bX_DpWmHAYC09k?usp=sharing
 
+And place in the models folder 
+The folder should be as in the root folder 
+
+emotion-detection
+├── models/
+│   ├── bltsm/
+│   │   ├── bilstm_student_adaptive.keras
+│   │   ├── tokenizer.pickle
+│   │   └── label_encoder.pickle
+│   ├── bert_emotion_model_final/       # Base fine-tuned BERT
+│   └── bert_student_adaptive/          # Domain-adapted BERT (best model)
+
+```
 ### 2. Create and activate a virtual environment
 ```bash
 py -3.11 -m venv py-venv

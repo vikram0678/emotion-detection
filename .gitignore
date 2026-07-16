@@ -1,4 +1,4 @@
-.env
+
 py-venv-tf
 models/bert_emotion_model_final/model.safetensors
 models/bert_student_adaptive/model.safetensors
