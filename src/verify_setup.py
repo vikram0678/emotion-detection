@@ -1,25 +1,13 @@
-"""
-CognitiveSense AI Environment & Emotion Model Verification Script
-"""
-
 import sys
 import os
+import io
 import time
-
-# Ensure UTF-8 output encoding on Windows
+import warnings
+warnings.filterwarnings("ignore")
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 if sys.platform == "win32":
-    try:
-        sys.stdout.reconfigure(encoding="utf-8")
-    except Exception:
-        pass
-
-script_dir = os.path.dirname(os.path.abspath(__file__)) if "__file__" in globals() else os.path.abspath("src")
-if script_dir not in sys.path:
-    sys.path.insert(0, script_dir)
-
-print("=" * 60, flush=True)
-print("🔍 COGNITIVESENSE AI: VERIFYING ENVIRONMENT & ENGINES", flush=True)
-print("=" * 60, flush=True)
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # 1. Package versions
 import numpy as np

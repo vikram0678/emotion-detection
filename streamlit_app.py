@@ -326,48 +326,62 @@ with col1:
         help="Select your academic field"
     )
 
+    def set_example(text: str):
+        st.session_state["input_text"] = text
+
     problem_text = st.text_area(
         f"Describe your {field} problem or challenge:",
         placeholder=f"e.g., 'I'm struggling with algorithms in {field}' or 'This concept is confusing'",
         height=120,
-        value=st.session_state.input_text,
-        key="problem_text_input_area"
+        key="input_text"
     )
 
     st.markdown("**Quick Examples:**")
     ex1, ex2, ex3 = st.columns(3)
     with ex1:
-        if st.button("😕 Confused about recursion", use_container_width=True):
-            st.session_state.input_text = "I'm confused about recursion and how base cases return."
-            st.session_state.problem_text_input_area = "I'm confused about recursion and how base cases return."
-            st.rerun()
+        st.button(
+            "😕 Confused about recursion",
+            use_container_width=True,
+            on_click=set_example,
+            args=("I'm confused about recursion and how base cases return.",)
+        )
     with ex2:
-        if st.button("😤 Debugging is frustrating", use_container_width=True):
-            st.session_state.input_text = "Debugging this bug is so frustrating, nothing works no matter what I try."
-            st.session_state.problem_text_input_area = "Debugging this bug is so frustrating, nothing works no matter what I try."
-            st.rerun()
+        st.button(
+            "😤 Debugging is frustrating",
+            use_container_width=True,
+            on_click=set_example,
+            args=("Debugging this bug is so frustrating, nothing works no matter what I try.",)
+        )
     with ex3:
-        if st.button("🧐 Curious about ML", use_container_width=True):
-            st.session_state.input_text = "I'm curious about machine learning and how neural networks learn."
-            st.session_state.problem_text_input_area = "I'm curious about machine learning and how neural networks learn."
-            st.rerun()
+        st.button(
+            "🧐 Curious about ML",
+            use_container_width=True,
+            on_click=set_example,
+            args=("I'm curious about machine learning and how neural networks learn.",)
+        )
 
     ex4, ex5, ex6 = st.columns(3)
     with ex4:
-        if st.button("💪 Solved all problems easily", use_container_width=True):
-            st.session_state.input_text = "I solved all the practice problems easily and feel very confident about this chapter!"
-            st.session_state.problem_text_input_area = "I solved all the practice problems easily and feel very confident about this chapter!"
-            st.rerun()
+        st.button(
+            "💪 Solved problems easily",
+            use_container_width=True,
+            on_click=set_example,
+            args=("I solved all the practice problems easily and feel very confident about this chapter!",)
+        )
     with ex5:
-        if st.button("😐 Lecture is repetitive & boring", use_container_width=True):
-            st.session_state.input_text = "This review lecture is repetitive and boring, I already know all of this material."
-            st.session_state.problem_text_input_area = "This review lecture is repetitive and boring, I already know all of this material."
-            st.rerun()
+        st.button(
+            "😐 Lecture is repetitive",
+            use_container_width=True,
+            on_click=set_example,
+            args=("This review lecture is repetitive and boring, I already know all of this material.",)
+        )
     with ex6:
-        if st.button("🎭 Fascinating but I am tired", use_container_width=True):
-            st.session_state.input_text = "Ohh! This concept seems fascinating but now I am tired and stuck on details."
-            st.session_state.problem_text_input_area = "Ohh! This concept seems fascinating but now I am tired and stuck on details."
-            st.rerun()
+        st.button(
+            "🎭 Fascinating but tired",
+            use_container_width=True,
+            on_click=set_example,
+            args=("Ohh! This concept seems fascinating but now I am tired and stuck on details.",)
+        )
 
 with col2:
     st.markdown("#### ⚙️ Settings")
