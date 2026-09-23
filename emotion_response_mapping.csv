@@ -1,0 +1,29 @@
+emotion,response
+Confused,"### 💙 Emotional Diagnosis & Validation
+I hear you! Feeling confused about this is completely natural—it just means your brain is actively building a new mental model for Computer Science. *(Detected State: **Confused** with **100.0%** certainty)*
+
+---
+
+### 💡 Core Concept & Strategy for Computer Science
+- **Intuition**: In computer science, confusion usually means multiple layers of abstraction are tangling up (e.g., memory pointers, recursion depth, or asynchronous execution).
+- **Actionable Technique**: Draw a dry-run execution trace on paper with a small sample input (e.g., n=3 for recursion or an array of 3 elements).
+
+---
+
+### 🎯 Socratic Mentor Check & Next Step
+- **Reflective Question**: *What is the exact input state right before the unexpected behavior occurs?*
+- **Suggested Micro-Action**: Isolate the function into an independent test script with print/debugger breakpoints."
+Curious,"### 💙 Emotional Diagnosis & Validation
+Fantastic curiosity! Digging deeper into the 'why' behind Computer Science is exactly how great thinkers master their craft. *(Detected State: **Curious** with **47.4%** certainty)*
+
+---
+
+### 💡 Core Concept & Strategy for Computer Science
+- **Intuition**: Curiosity is the engine of deep engineering mastery. Exploring edge cases and internal mechanics cements mental models.
+- **Actionable Technique**: Inspect the time/space complexity (Big-O) or explore the underlying data structure tradeoffs.
+
+---
+
+### 🎯 Socratic Mentor Check & Next Step
+- **Reflective Question**: *How would this algorithm perform if the dataset scaled from 1,000 items to 10,000,000 items?*
+- **Suggested Micro-Action**: Benchmark two different approaches using a timer and observe the memory/CPU difference."

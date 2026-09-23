@@ -1,3 +1,39 @@
+# ============================================
+# Python Virtual Environments
+# ============================================
+py-venv-tf/
+venv/
+env/
+.venv/
 
-py-venv-tf
-models/
+# ============================================
+# Python Bytecode & Cache
+# ============================================
+__pycache__/
+*/__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# ============================================
+# Sensitive API Keys & Environment
+# ============================================
+.env
+.env.local
+
+# ============================================
+# System, IDE & Temporary Files
+# ============================================
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+
+# ============================================
+# Large Duplicate / Obsolete Artifacts (>100MB)
+# ============================================
+*.pt.bak
+*.bin
+models/**/pytorch_model_quantized.pt

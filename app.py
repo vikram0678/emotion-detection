@@ -4,21 +4,27 @@ from transformers import BertTokenizerFast, BertForSequenceClassification
 from src.keyword_enhancement import apply_keyword_boost
 import pandas as pd
 import os
+import sys
+
+# Ensure src directory is in sys.path
+sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
+
+# Ensure UTF-8 output encoding on Windows
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
+from src.bert_model import BERTEmotionClassifier
 
 app = Flask(__name__)
 
 MODEL_PATH = "models/bert_student_adaptive"
 RESPONSE_MAPPING_PATH = "emotion_response_mapping.csv"
 
-print("📦 Loading model...")
-tokenizer = BertTokenizerFast.from_pretrained(MODEL_PATH)
-model = BertForSequenceClassification.from_pretrained(MODEL_PATH)
-model.eval()
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model.to(device)
-id2label = model.config.id2label
-print("✅ Model loaded on", device)
+classifier = BERTEmotionClassifier()
+classifier.load_model(MODEL_PATH)
 
 # --- Load canned responses per emotion, if available ---
 response_map = {}
@@ -30,22 +36,9 @@ else:
     print("⚠️ No emotion_response_mapping.csv found — responses will be generic")
 
 
-classes = [id2label[i] for i in range(len(id2label))]
-
 def predict_emotion(text):
-    inputs = tokenizer(text, padding="max_length", truncation=True, max_length=80, return_tensors="pt")
-    inputs = {k: v.to(device) for k, v in inputs.items()}
-
-    with torch.no_grad():
-        outputs = model(**inputs)
-        probs = torch.softmax(outputs.logits, dim=-1)[0].cpu().numpy()
-
-    boosted_probs, _ = apply_keyword_boost(text, probs, classes)
-
-    pred_idx = boosted_probs.argmax()
-    emotion = classes[pred_idx]
-    confidence = float(boosted_probs[pred_idx])
-    return emotion, confidence
+    result = classifier.predict(text)
+    return result["emotion"], result["confidence"]
 
 
 HTML_PAGE = """
