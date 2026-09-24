@@ -669,7 +669,7 @@ else:
                 key="input_text"
             )
 
-            st.markdown("**Quick Examples:**")
+            st.markdown("**Quick Examples (Click to test):**")
             ex1, ex2, ex3 = st.columns(3)
             with ex1:
                 st.button(
@@ -696,19 +696,42 @@ else:
             ex4, ex5, ex6 = st.columns(3)
             with ex4:
                 st.button(
+                    "🤯 Easy but impossible (3 hrs)",
+                    use_container_width=True,
+                    on_click=set_example,
+                    args=("I thought this code would be easy, but after 3 hours it is completely impossible.",)
+                )
+            with ex5:
+                st.button(
+                    "🌀 Infinite loop printing 0",
+                    use_container_width=True,
+                    on_click=set_example,
+                    args=("Why does this loop keep printing 0 infinitely? I tried everything and nothing works!",)
+                )
+            with ex6:
+                st.button(
+                    "🚀 Finished fast, need challenge",
+                    use_container_width=True,
+                    on_click=set_example,
+                    args=("I solved all the practice problems in 10 minutes and feel confident, please give me a harder challenge!",)
+                )
+
+            ex7, ex8, ex9 = st.columns(3)
+            with ex7:
+                st.button(
                     "💪 Solved problems easily",
                     use_container_width=True,
                     on_click=set_example,
                     args=("I solved all the practice problems easily and feel very confident about this chapter!",)
                 )
-            with ex5:
+            with ex8:
                 st.button(
                     "😐 Lecture is repetitive",
                     use_container_width=True,
                     on_click=set_example,
                     args=("This review lecture is repetitive and boring, I already know all of this material.",)
                 )
-            with ex6:
+            with ex9:
                 st.button(
                     "🎭 Fascinating but tired",
                     use_container_width=True,
