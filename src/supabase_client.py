@@ -69,12 +69,15 @@ def is_supabase_connected() -> bool:
 
 
 def _format_auth_email(username_or_email: str) -> (str, str):
-    """Converts a username like 'vikram' into 'vikram@student.local' for clean auth."""
+    """Converts any username like 'vikram' into a valid RFC email 'vikram@student.edu' for Supabase Auth."""
     raw = username_or_email.strip()
-    if "@" in raw:
+    if "@" in raw and "." in raw.split("@")[-1]:
         display_name = raw.split("@")[0]
-        return raw, display_name
-    return f"{raw.lower()}@student.local", raw
+        return raw.lower(), display_name
+    clean_username = "".join(c for c in raw if c.isalnum() or c in ["_", "-"]).lower()
+    if not clean_username:
+        clean_username = "student"
+    return f"{clean_username}@student.edu", raw
 
 
 # =========================================================
