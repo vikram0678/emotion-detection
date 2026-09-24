@@ -342,7 +342,7 @@ def add_to_history(field, problem, emotion, confidence, ai_response, bilstm_scor
 
 
 # ============================================
-# 5. SIDEBAR: SYSTEM DASHBOARD
+# 5. TOP NAVIGATION BAR WITH USER PROFILE (RIGHT TOP)
 # ============================================
 examples_count = 0
 if os.path.exists("emotion_response_examples.csv"):
@@ -354,30 +354,6 @@ if os.path.exists("emotion_response_examples.csv"):
 
 supabase_active = is_supabase_connected()
 
-with st.sidebar:
-    st.markdown("### 📊 System Dashboard")
-    st.markdown(f"**Models:** ✅ {status_text}")
-    st.markdown(f"**Database:** {'☁️ Supabase PostgreSQL' if supabase_active else '📁 Local CSV'}")
-    st.markdown(f"**Total Interactions:** `{len(st.session_state.emotion_history)}`")
-    st.markdown(f"**Saved Examples:** `{examples_count}`")
-
-    if st.button("Clear History", use_container_width=True):
-        st.session_state.emotion_history = []
-        st.session_state.last_analysis = None
-        st.session_state.input_text = ""
-        st.rerun()
-
-    if st.session_state.emotion_history:
-        st.markdown("---")
-        st.markdown("#### 🕒 Recent Sessions")
-        recent = st.session_state.emotion_history[-3:]
-        for item in reversed(recent):
-            st.markdown(f"• **{item['field']}**: {item['emotion']} (`{item['confidence']:.1%}`)")
-
-
-# ============================================
-# 6. TOP NAVIGATION BAR WITH USER PROFILE (RIGHT TOP)
-# ============================================
 nav_col1, nav_col2 = st.columns([3.0, 1.4], gap="medium")
 
 with nav_col1:
@@ -470,9 +446,19 @@ with nav_col2:
 
 
 # ============================================
-# 7. MAIN VIEW ROUTING (LANDING PAGE vs APP PORTAL)
+# 6. MAIN VIEW ROUTING (LANDING PAGE vs APP PORTAL)
 # ============================================
 if st.session_state.user is None:
+    # ----------------------------------------------------
+    # HIDE SIDEBAR ON LANDING PAGE
+    # ----------------------------------------------------
+    st.markdown("""
+    <style>
+        [data-testid="stSidebar"] { display: none !important; }
+        [data-testid="collapsedControl"] { display: none !important; }
+    </style>
+    """, unsafe_allow_html=True)
+
     # ----------------------------------------------------
     # HOME LANDING PAGE (VISITOR / LOGGED OUT VIEW)
     # ----------------------------------------------------
@@ -612,6 +598,31 @@ else:
     # LOGGED-IN APPLICATION PORTAL VIEW
     # ----------------------------------------------------
     u_display = st.session_state.user.get("username", "Student")
+
+    # Render Sidebar ONLY for Logged-In Students
+    with st.sidebar:
+        st.markdown(f"### 🎓 Student Profile")
+        st.markdown(f"**Logged in as:** `{u_display}`")
+        st.markdown("---")
+        st.markdown("### 📊 System Dashboard")
+        st.markdown(f"**Models:** ✅ {status_text}")
+        st.markdown(f"**Database:** {'☁️ Supabase PostgreSQL' if supabase_active else '📁 Local CSV'}")
+        st.markdown(f"**Total Interactions:** `{len(st.session_state.emotion_history)}`")
+        st.markdown(f"**Saved Examples:** `{examples_count}`")
+
+        if st.button("Clear Session History", use_container_width=True):
+            st.session_state.emotion_history = []
+            st.session_state.last_analysis = None
+            st.session_state.input_text = ""
+            st.rerun()
+
+        if st.session_state.emotion_history:
+            st.markdown("---")
+            st.markdown("#### 🕒 Recent Sessions")
+            recent = st.session_state.emotion_history[-3:]
+            for item in reversed(recent):
+                st.markdown(f"• **{item['field']}**: {item['emotion']} (`{item['confidence']:.1%}`)")
+
     st.markdown(f"""
     <div style="background: rgba(30, 41, 59, 0.7); border: 1px solid #334155; border-radius: 10px; padding: 10px 18px; margin-bottom: 20px;">
         <span style="color: #F8FAFC; font-size: 1rem;">👋 Welcome, <b style="color: #38BDF8;">{u_display}</b>! Your personalized learning workspace is active.</span>
