@@ -82,8 +82,8 @@ class BiLSTMTorchModel:
         self.model = _BiLSTMModule(len(self.vocab), EMBEDDING_DIM, LSTM_UNITS, 5)
         
         try:
-            state_dict = torch.load(model_path, map_location=self.device, weights_only=True)
-        except Exception:
+            state_dict = torch.load(model_path, map_location=self.device, weights_only=False)
+        except TypeError:
             state_dict = torch.load(model_path, map_location=self.device)
         self.model.load_state_dict(state_dict)
         self.model.eval()
@@ -130,26 +130,30 @@ class EmotionPredictor:
                 print(f"⚠️ PyTorch BiLSTM fallback: {e}")
                 self.use_torch = False
 
-        # 2. Fallback to Keras if PyTorch is not available
+        # 2. Fallback to Keras if PyTorch is not available and tensorflow exists
         if not self.use_torch:
-            keras_path = "models/bltsm/bilstm_student_adaptive.keras"
-            import tensorflow as tf
-            from keras.src.utils.sequence_utils import pad_sequences
-            self.pad_sequences = pad_sequences
             try:
-                self.keras_model = tf.keras.models.load_model(keras_path)
-            except Exception:
-                self.keras_model = tf.keras.models.load_model(keras_path, compile=False)
+                keras_path = "models/bltsm/bilstm_student_adaptive.keras"
+                if os.path.exists(keras_path):
+                    import tensorflow as tf
+                    from keras.src.utils.sequence_utils import pad_sequences
+                    self.pad_sequences = pad_sequences
+                    try:
+                        self.keras_model = tf.keras.models.load_model(keras_path)
+                    except Exception:
+                        self.keras_model = tf.keras.models.load_model(keras_path, compile=False)
 
-            with open(tokenizer_path, "rb") as f:
-                self.tokenizer = pickle.load(f)
+                    with open(tokenizer_path, "rb") as f:
+                        self.tokenizer = pickle.load(f)
 
-            if os.path.exists(label_encoder_path):
-                with open(label_encoder_path, "rb") as f:
-                    le = pickle.load(f)
-                    self.classes = list(le.classes_)
+                    if os.path.exists(label_encoder_path):
+                        with open(label_encoder_path, "rb") as f:
+                            le = pickle.load(f)
+                            self.classes = list(le.classes_)
 
-            print("✅ Loaded Keras BiLSTM model")
+                    print("✅ Loaded Keras BiLSTM model")
+            except Exception as ke:
+                print(f"⚠️ Keras fallback note: {ke}")
 
         print("✅ BiLSTM ready. Classes:", self.classes)
 
