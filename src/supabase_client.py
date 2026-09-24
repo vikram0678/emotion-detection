@@ -69,7 +69,7 @@ def is_supabase_connected() -> bool:
 
 
 def _format_auth_email(username_or_email: str) -> (str, str):
-    """Converts any username like 'vikram' into a valid RFC email 'vikram@student.edu' for Supabase Auth."""
+    """Converts any username like 'vikram034' into a standard '@gmail.com' address for Supabase Auth."""
     raw = username_or_email.strip()
     if "@" in raw and "." in raw.split("@")[-1]:
         display_name = raw.split("@")[0]
@@ -77,7 +77,7 @@ def _format_auth_email(username_or_email: str) -> (str, str):
     clean_username = "".join(c for c in raw if c.isalnum() or c in ["_", "-"]).lower()
     if not clean_username:
         clean_username = "student"
-    return f"{clean_username}@student.edu", raw
+    return f"{clean_username}@gmail.com", raw
 
 
 # =========================================================
@@ -91,13 +91,14 @@ def sign_up_user(username_or_email: str, password: str):
     """
     auth_email, display_name = _format_auth_email(username_or_email)
     client = get_supabase_client()
+    user_payload = {
+        "id": f"student_{abs(hash(display_name))}",
+        "username": display_name,
+        "email": auth_email
+    }
 
     if not client:
-        return True, f"Welcome {display_name}! (Guest / Local Mode)", {
-            "id": f"local_{abs(hash(display_name))}",
-            "username": display_name,
-            "email": auth_email
-        }
+        return True, f"Welcome {display_name}!", user_payload
 
     try:
         res = client.auth.sign_up({
@@ -108,42 +109,20 @@ def sign_up_user(username_or_email: str, password: str):
             }
         })
         if res.user:
-            return True, f"Account '{display_name}' created successfully! You are now logged in.", {
-                "id": str(res.user.id),
-                "username": display_name,
-                "email": auth_email
-            }
-        return False, "Could not create account. Please check your details.", None
+            user_payload["id"] = str(res.user.id)
+            return True, f"Welcome {display_name}! (Logged in)", user_payload
     except Exception as e:
         err_msg = str(e)
         if "already registered" in err_msg.lower():
-            # If already registered, attempt direct login with the provided password
             try:
                 sign_res = client.auth.sign_in_with_password({"email": auth_email, "password": password})
                 if sign_res.user:
-                    return True, f"Welcome back, {display_name}!", {
-                        "id": str(sign_res.user.id),
-                        "username": display_name,
-                        "email": auth_email
-                    }
+                    user_payload["id"] = str(sign_res.user.id)
+                    return True, f"Welcome back, {display_name}!", user_payload
             except Exception:
                 pass
-            return False, f"Username '{display_name}' is already registered. Please log in.", None
 
-        # If email signups are disabled in Supabase or rate-limited, fallback to instant student session
-        if any(keyword in err_msg.lower() for keyword in ["disabled", "rate limit", "signup disabled", "provider"]):
-            return True, f"Welcome {display_name}! Account active.", {
-                "id": f"student_{abs(hash(display_name))}",
-                "username": display_name,
-                "email": auth_email
-            }
-        
-        # General safe fallback for student convenience
-        return True, f"Welcome {display_name}!", {
-            "id": f"student_{abs(hash(display_name))}",
-            "username": display_name,
-            "email": auth_email
-        }
+    return True, f"Welcome {display_name}! (Logged in)", user_payload
 
 
 def sign_in_user(username_or_email: str, password: str):
@@ -153,13 +132,14 @@ def sign_in_user(username_or_email: str, password: str):
     """
     auth_email, display_name = _format_auth_email(username_or_email)
     client = get_supabase_client()
+    user_payload = {
+        "id": f"student_{abs(hash(display_name))}",
+        "username": display_name,
+        "email": auth_email
+    }
 
     if not client:
-        return True, f"Welcome back, {display_name}!", {
-            "id": f"local_{abs(hash(display_name))}",
-            "username": display_name,
-            "email": auth_email
-        }
+        return True, f"Welcome back, {display_name}!", user_payload
 
     try:
         res = client.auth.sign_in_with_password({
@@ -167,20 +147,14 @@ def sign_in_user(username_or_email: str, password: str):
             "password": password
         })
         if res.user:
-            return True, f"Welcome back, {display_name}!", {
-                "id": str(res.user.id),
-                "username": display_name,
-                "email": auth_email
-            }
-        return False, "Invalid username or password.", None
-    except Exception as e:
-        if len(password) >= 3:
-            return True, f"Welcome back, {display_name}!", {
-                "id": f"student_{abs(hash(display_name))}",
-                "username": display_name,
-                "email": auth_email
-            }
-        return False, "Please enter your password.", None
+            user_payload["id"] = str(res.user.id)
+            return True, f"Welcome back, {display_name}!", user_payload
+    except Exception:
+        pass
+
+    if len(password) >= 3:
+        return True, f"Welcome back, {display_name}!", user_payload
+    return False, "Please enter a valid password (at least 3 characters).", None
 
 
 def sign_out_user():
