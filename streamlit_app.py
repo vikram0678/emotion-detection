@@ -57,7 +57,7 @@ st.markdown("""
     
     /* Main Background & Card Styling */
     .hero-title {
-        font-size: 2.2rem;
+        font-size: 2.1rem;
         font-weight: 700;
         color: #FFFFFF;
         display: flex;
@@ -67,8 +67,8 @@ st.markdown("""
     }
     .hero-subtitle {
         color: #94A3B8;
-        font-size: 1.0rem;
-        margin-bottom: 20px;
+        font-size: 0.95rem;
+        margin-bottom: 12px;
     }
 
     /* Response Card styling */
@@ -149,15 +149,21 @@ st.markdown("""
         margin-bottom: 12px;
     }
 
-    /* User Badge chip */
-    .user-badge {
+    /* Top Right Profile Card */
+    .top-profile-card {
         background: #1E293B;
         border: 1px solid #334155;
-        border-radius: 8px;
-        padding: 8px 12px;
-        font-size: 0.88rem;
+        border-radius: 10px;
+        padding: 10px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+    }
+    .top-profile-name {
         color: #38BDF8;
-        margin-bottom: 12px;
+        font-weight: 600;
+        font-size: 0.95rem;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -254,7 +260,7 @@ def add_to_history(field, problem, emotion, confidence, ai_response, bilstm_scor
 
 
 # ============================================
-# 5. SIDEBAR: AUTHENTICATION & DASHBOARD
+# 5. SIDEBAR: SYSTEM DASHBOARD
 # ============================================
 examples_count = 0
 if os.path.exists("emotion_response_examples.csv"):
@@ -267,49 +273,6 @@ if os.path.exists("emotion_response_examples.csv"):
 supabase_active = is_supabase_connected()
 
 with st.sidebar:
-    st.markdown("### 👤 Student Account")
-    
-    if st.session_state.user:
-        st.markdown(f"<div class='user-badge'>🎓 <b>Logged in:</b><br>{st.session_state.user['email']}</div>", unsafe_allow_html=True)
-        if st.button("🚪 Log Out", use_container_width=True):
-            sign_out_user()
-            st.session_state.user = None
-            st.success("Logged out successfully.")
-            st.rerun()
-    else:
-        st.markdown("<div class='user-badge'>👤 <b>Mode:</b> Guest / Anonymous</div>", unsafe_allow_html=True)
-        with st.expander("🔑 Sign In / Sign Up", expanded=False):
-            auth_tab1, auth_tab2 = st.tabs(["Log In", "Sign Up"])
-            
-            with auth_tab1:
-                login_email = st.text_input("Email", key="login_email_input")
-                login_pwd = st.text_input("Password", type="password", key="login_pwd_input")
-                if st.button("Sign In", key="btn_signin_submit", use_container_width=True):
-                    if login_email and login_pwd:
-                        ok, msg, udata = sign_in_user(login_email, login_pwd)
-                        if ok:
-                            st.session_state.user = udata
-                            st.success(msg)
-                            st.rerun()
-                        else:
-                            st.error(msg)
-                    else:
-                        st.warning("Please enter your email and password.")
-
-            with auth_tab2:
-                signup_email = st.text_input("Email", key="signup_email_input")
-                signup_pwd = st.text_input("Password", type="password", key="signup_pwd_input")
-                if st.button("Create Account", key="btn_signup_submit", use_container_width=True):
-                    if signup_email and signup_pwd:
-                        ok, msg, udata = sign_up_user(signup_email, signup_pwd)
-                        if ok:
-                            st.success(msg)
-                        else:
-                            st.error(msg)
-                    else:
-                        st.warning("Please provide an email and a secure password.")
-
-    st.markdown("---")
     st.markdown("### 📊 System Dashboard")
     st.markdown(f"**Models:** ✅ {status_text}")
     st.markdown(f"**Database:** {'☁️ Supabase PostgreSQL' if supabase_active else '📁 Local CSV'}")
@@ -331,12 +294,73 @@ with st.sidebar:
 
 
 # ============================================
-# 6. HERO TITLE
+# 6. TOP HEADER WITH USER PROFILE (RIGHT TOP)
 # ============================================
-st.markdown("""
-<div class="hero-title">🤖 Emotion-Aware Learning Assistant</div>
-<div class="hero-subtitle">Get personalized help based on your field and emotional state</div>
-""", unsafe_allow_html=True)
+head_col1, head_col2 = st.columns([3.2, 1.3], gap="medium")
+
+with head_col1:
+    st.markdown("""
+    <div class="hero-title">🤖 Emotion-Aware Learning Assistant</div>
+    <div class="hero-subtitle">Get personalized pedagogical guidance based on your field and emotional state</div>
+    """, unsafe_allow_html=True)
+
+with head_col2:
+    if st.session_state.user:
+        u_name = st.session_state.user.get("username", "Student")
+        st.markdown(f"""
+        <div class="top-profile-card">
+            <div>
+                <span style="font-size: 1.1rem;">🎓</span> 
+                <span class="top-profile-name">{u_name}</span>
+                <div style="font-size: 0.75rem; color: #10B981;">● Logged In</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("🚪 Sign Out", key="top_signout_btn", use_container_width=True):
+            sign_out_user()
+            st.session_state.user = None
+            st.rerun()
+    else:
+        st.markdown("""
+        <div class="top-profile-card">
+            <div>
+                <span style="font-size: 1.1rem;">👤</span> 
+                <span style="color: #94A3B8; font-size: 0.9rem; font-weight: 500;">Guest Student</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        with st.expander("🔑 Sign In / Sign Up", expanded=False):
+            t_tab1, t_tab2 = st.tabs(["Log In", "Sign Up"])
+            
+            with t_tab1:
+                uname = st.text_input("Username or Email", key="top_login_u")
+                upwd = st.text_input("Password", type="password", key="top_login_p")
+                if st.button("Sign In", key="top_login_btn", use_container_width=True):
+                    if uname and upwd:
+                        ok, msg, udata = sign_in_user(uname, upwd)
+                        if ok:
+                            st.session_state.user = udata
+                            st.success(msg)
+                            st.rerun()
+                        else:
+                            st.error(msg)
+                    else:
+                        st.warning("Please enter username and password.")
+
+            with t_tab2:
+                new_u = st.text_input("Choose Username", key="top_reg_u")
+                new_p = st.text_input("Choose Password", type="password", key="top_reg_p")
+                if st.button("Create Account", key="top_reg_btn", use_container_width=True):
+                    if new_u and new_p:
+                        ok, msg, udata = sign_up_user(new_u, new_p)
+                        if ok:
+                            st.session_state.user = udata
+                            st.success(msg)
+                            st.rerun()
+                        else:
+                            st.error(msg)
+                    else:
+                        st.warning("Please provide a username and password.")
 
 
 # ============================================
@@ -474,7 +498,7 @@ with main_tab1:
                 )
 
                 # 4. Database & CSV Persistence
-                current_user_id = st.session_state.user["email"] if st.session_state.user else "guest_student"
+                current_user_id = st.session_state.user["username"] if st.session_state.user else "guest_student"
                 if save_data:
                     log_student_interaction(
                         user_id=current_user_id,
@@ -721,7 +745,7 @@ with main_tab3:
         submit_feedback = st.form_submit_button("🚀 Submit Feedback", type="primary")
 
         if submit_feedback:
-            current_user = st.session_state.user["email"] if st.session_state.user else "guest_student"
+            current_user = st.session_state.user["username"] if st.session_state.user else "guest_student"
             is_helpful_bool = True if feedback_helpful.startswith("Yes") else False
             
             saved_to_db, fb_msg = log_student_feedback(
