@@ -149,6 +149,38 @@ st.markdown("""
         margin-bottom: 12px;
     }
 
+    /* Navbar Styling */
+    .navbar-card {
+        background: rgba(15, 23, 42, 0.75);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(51, 65, 85, 0.8);
+        border-radius: 14px;
+        padding: 14px 22px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    }
+    .navbar-brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .navbar-logo-text {
+        font-size: 1.5rem;
+        font-weight: 800;
+        background: linear-gradient(90deg, #FFFFFF, #E2E8F0);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        letter-spacing: -0.02em;
+    }
+    .navbar-tagline {
+        font-size: 0.8rem;
+        color: #94A3B8;
+        font-weight: 500;
+    }
+
     /* Top Right Profile Card */
     .top-profile-card {
         background: #1E293B;
@@ -344,17 +376,26 @@ with st.sidebar:
 
 
 # ============================================
-# 6. TOP HEADER WITH USER PROFILE (RIGHT TOP)
+# 6. TOP NAVIGATION BAR WITH USER PROFILE (RIGHT TOP)
 # ============================================
-head_col1, head_col2 = st.columns([3.0, 1.4], gap="medium")
+nav_col1, nav_col2 = st.columns([3.0, 1.4], gap="medium")
 
-with head_col1:
+with nav_col1:
     st.markdown("""
-    <div class="hero-title">🧠 CognitiveSense AI</div>
-    <div class="hero-subtitle">Adaptive Emotion-Aware Learning & Pedagogical Intervention Platform</div>
+    <div style="display: flex; align-items: center; gap: 14px; padding: 4px 0;">
+        <div style="font-size: 2.2rem; filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.4));">🧠</div>
+        <div>
+            <div style="font-size: 1.6rem; font-weight: 800; color: #FFFFFF; letter-spacing: -0.02em; line-height: 1.2;">
+                CognitiveSense <span style="color: #EF4444;">AI</span>
+            </div>
+            <div style="font-size: 0.85rem; color: #94A3B8; font-weight: 500;">
+                Emotion-Aware Learning & Adaptive Pedagogical Assistant
+            </div>
+        </div>
+    </div>
     """, unsafe_allow_html=True)
 
-with head_col2:
+with nav_col2:
     if st.session_state.user:
         u_name = st.session_state.user.get("username", "Student")
         st.markdown(f"""
@@ -384,8 +425,13 @@ with head_col2:
             t_tab1, t_tab2 = st.tabs(["Log In", "Sign Up"])
             
             with t_tab1:
+                def set_demo_creds():
+                    st.session_state["top_login_u"] = "vikram034"
+                    st.session_state["top_login_p"] = "Vikram123"
+
                 uname = st.text_input("Username", key="top_login_u", placeholder="e.g. vikram034")
                 upwd = st.text_input("Password", type="password", key="top_login_p", placeholder="••••••••")
+                
                 if st.button("Sign In", key="top_login_btn", type="primary", use_container_width=True):
                     if uname and upwd:
                         ok, msg, udata = sign_in_user(uname, upwd)
@@ -397,6 +443,15 @@ with head_col2:
                             st.error(msg)
                     else:
                         st.warning("Please enter username and password.")
+
+                st.markdown("<div style='height: 4px;'></div>", unsafe_allow_html=True)
+                st.button(
+                    "📋 Autofill Demo: vikram034 / Vikram123",
+                    key="fill_demo_btn",
+                    use_container_width=True,
+                    on_click=set_demo_creds,
+                    help="Click to automatically fill demo student credentials"
+                )
 
             with t_tab2:
                 new_u = st.text_input("Choose Username", key="top_reg_u", placeholder="e.g. vikram034")
@@ -421,11 +476,11 @@ if st.session_state.user is None:
     # ----------------------------------------------------
     # HOME LANDING PAGE (VISITOR / LOGGED OUT VIEW)
     # ----------------------------------------------------
-    st.markdown("<hr style='border-color: #334155; margin: 16px 0 28px 0;'>", unsafe_allow_html=True)
+    st.markdown("<hr style='border-color: #334155; margin: 12px 0 28px 0;'>", unsafe_allow_html=True)
     
     # Hero Section
     st.markdown("""
-    <div style="text-align: center; padding: 20px 10px 40px 10px;">
+    <div style="text-align: center; padding: 20px 10px 30px 10px;">
         <span class="landing-hero-badge">✨ NEXT-GEN AFFECTIVE LEARNING PLATFORM</span>
         <h1 style="font-size: 2.8rem; font-weight: 800; color: #FFFFFF; line-height: 1.2; margin-bottom: 16px;">
             Empowering Student Success Through <br/>
@@ -433,21 +488,13 @@ if st.session_state.user is None:
                 Emotion-Aware Artificial Intelligence
             </span>
         </h1>
-        <p style="font-size: 1.1rem; color: #94A3B8; max-width: 820px; margin: 0 auto 30px auto; line-height: 1.6;">
+        <p style="font-size: 1.1rem; color: #94A3B8; max-width: 820px; margin: 0 auto 10px auto; line-height: 1.6;">
             CognitiveSense AI detects learning friction, frustration, confusion, and boredom in real time 
             using high-speed deep learning NLP models — instantly tailoring pedagogical strategies, Socratic hints, 
             and adaptive interventions to maximize student mastery.
         </p>
     </div>
     """, unsafe_allow_html=True)
-
-    # Quick Access CTA Row
-    c_cta1, c_cta2, c_cta3 = st.columns([1, 1.6, 1])
-    with c_cta2:
-        st.info("💡 **Portal Access Required:** Please Sign In or Create an Account in the top-right box above, or click below for instant 1-click student demo access.")
-        if st.button("⚡ Instant 1-Click Demo Login", type="primary", use_container_width=True):
-            st.session_state.user = {"id": "demo_student", "username": "Student_Demo", "created_at": str(datetime.now())}
-            st.rerun()
 
     st.markdown("<br/>", unsafe_allow_html=True)
 
