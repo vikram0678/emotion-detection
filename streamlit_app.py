@@ -40,8 +40,8 @@ from supabase_client import (
 # 1. PAGE CONFIGURATION
 # ============================================
 st.set_page_config(
-    page_title="AI Learning Assistant - Emotion Aware",
-    page_icon="🤖",
+    page_title="Student Emotion Detection & Adaptive Learning Assistance System",
+    page_icon="🎓",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -383,13 +383,13 @@ nav_col1, nav_col2 = st.columns([3.0, 1.4], gap="medium")
 with nav_col1:
     st.markdown("""
     <div style="display: flex; align-items: center; gap: 14px; padding: 4px 0;">
-        <div style="font-size: 2.2rem; filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.4));">🧠</div>
+        <div style="font-size: 2.2rem; filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.4));">🎓</div>
         <div>
-            <div style="font-size: 1.6rem; font-weight: 800; color: #FFFFFF; letter-spacing: -0.02em; line-height: 1.2;">
-                CognitiveSense <span style="color: #EF4444;">AI</span>
+            <div style="font-size: 1.35rem; font-weight: 800; color: #FFFFFF; letter-spacing: -0.01em; line-height: 1.25;">
+                Student Emotion Detection & <span style="color: #EF4444;">Adaptive Learning Assistance System</span>
             </div>
-            <div style="font-size: 0.85rem; color: #94A3B8; font-weight: 500;">
-                Emotion-Aware Learning & Adaptive Pedagogical Assistant
+            <div style="font-size: 0.82rem; color: #94A3B8; font-weight: 500;">
+                Real-Time Affective Computing & Personalized Pedagogical Interventions
             </div>
         </div>
     </div>
@@ -488,8 +488,8 @@ if st.session_state.user is None:
                 Emotion-Aware Artificial Intelligence
             </span>
         </h1>
-        <p style="font-size: 1.1rem; color: #94A3B8; max-width: 820px; margin: 0 auto 10px auto; line-height: 1.6;">
-            CognitiveSense AI detects learning friction, frustration, confusion, and boredom in real time 
+        <p style="font-size: 1.1rem; color: #94A3B8; max-width: 860px; margin: 0 auto 10px auto; line-height: 1.6;">
+            The <b>Student Emotion Detection & Adaptive Learning Assistance System</b> detects learning friction, frustration, confusion, and boredom in real time 
             using high-speed deep learning NLP models — instantly tailoring pedagogical strategies, Socratic hints, 
             and adaptive interventions to maximize student mastery.
         </p>

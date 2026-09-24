@@ -1,5 +1,5 @@
 # =========================================================
-# CognitiveSense AI Learning Assistant - Cloud Requirements
+# Student Emotion Detection & Adaptive Learning Assistance System - Cloud Requirements
 # =========================================================
 
 # Web UI & Visualization
