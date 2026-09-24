@@ -177,9 +177,9 @@ class EmotionPredictor:
                 "cleaned_text": cleaned,
             }
 
-        if self.use_torch:
+        if self.use_torch and self.torch_predictor:
             probs = self.torch_predictor.predict_probs(tokens)
-        else:
+        elif self.keras_model and self.tokenizer:
             sequence = self.tokenizer.texts_to_sequences([cleaned])
             if not sequence or not sequence[0]:
                 probs = np.array([0.2, 0.2, 0.2, 0.2, 0.2])
@@ -187,6 +187,8 @@ class EmotionPredictor:
                 padded = self.pad_sequences(sequence, maxlen=MAX_SEQ_LEN, padding="post", truncating="post")
                 probs = self.keras_model.predict(padded, verbose=0)
                 probs = np.array(probs).flatten()
+        else:
+            probs = np.array([0.2, 0.2, 0.2, 0.2, 0.2])
 
         if len(probs) != len(self.classes):
             probs = np.resize(probs, len(self.classes))
