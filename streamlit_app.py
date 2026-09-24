@@ -27,6 +27,14 @@ import plotly.graph_objects as go
 
 from mixed_emotion import get_mixed_emotions, EMOTION_RESPONSES
 from gemini_helper import get_gemini_response
+from supabase_client import (
+    is_supabase_connected,
+    sign_in_user,
+    sign_up_user,
+    sign_out_user,
+    log_student_interaction,
+    log_student_feedback,
+)
 
 # ============================================
 # 1. PAGE CONFIGURATION
@@ -63,7 +71,7 @@ st.markdown("""
         margin-bottom: 20px;
     }
 
-    /* Response Card styling matching screenshot */
+    /* Response Card styling */
     .response-container {
         background: #0F172A;
         border: 1px solid #1E293B;
@@ -98,22 +106,21 @@ st.markdown("""
         background-color: #EF4444;
         background-image: linear-gradient(90deg, #F87171, #EF4444);
         color: white;
-        font-weight: 600;
-        font-size: 1.05rem;
         border: none;
         border-radius: 8px;
+        font-weight: 600;
+        font-size: 1.05rem;
         padding: 12px 24px;
-        width: 100%;
-        margin-top: 10px;
-        transition: all 0.2s ease;
+        box-shadow: 0 4px 14px 0 rgba(239, 68, 68, 0.39);
+        transition: all 0.2s ease-in-out;
     }
     div.stButton > button[kind="primary"]:hover {
         background-color: #DC2626;
+        box-shadow: 0 6px 20px rgba(239, 68, 68, 0.5);
         transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
     }
-    
-    /* Quick Example Secondary Buttons */
+
+    /* Example Buttons styling */
     div.stButton > button:not([kind="primary"]) {
         background: #1E293B;
         color: #E2E8F0;
@@ -141,6 +148,17 @@ st.markdown("""
         font-size: 0.95rem;
         margin-bottom: 12px;
     }
+
+    /* User Badge chip */
+    .user-badge {
+        background: #1E293B;
+        border: 1px solid #334155;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 0.88rem;
+        color: #38BDF8;
+        margin-bottom: 12px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -156,6 +174,9 @@ if "input_text" not in st.session_state:
 
 if "last_analysis" not in st.session_state:
     st.session_state.last_analysis = None
+
+if "user" not in st.session_state:
+    st.session_state.user = None  # None indicates Guest Student mode
 
 
 # ============================================
@@ -198,42 +219,8 @@ bilstm_model, bert_model, status_text = load_models()
 
 
 # ============================================
-# 4. CSV PERSISTENCE & HISTORY
+# 4. HISTORY LOGGING HELPER
 # ============================================
-def save_to_csv(field, problem, emotion, confidence, ai_response):
-    """Saves interaction logs to CSV for continuous learning and analytics."""
-    try:
-        new_example = {
-            "text": problem,
-            "emotion": emotion.lower(),
-            "confidence": confidence,
-            "response": ai_response,
-            "field": field,
-            "timestamp": datetime.now().isoformat(),
-        }
-        examples_file = "emotion_response_examples.csv"
-        if os.path.exists(examples_file):
-            df = pd.read_csv(examples_file)
-            df = pd.concat([df, pd.DataFrame([new_example])], ignore_index=True)
-        else:
-            df = pd.DataFrame([new_example])
-        df.to_csv(examples_file, index=False)
-
-        # Update mapping file
-        mapping_file = "emotion_response_mapping.csv"
-        if os.path.exists(mapping_file):
-            mapping_df = pd.read_csv(mapping_file)
-            if emotion not in mapping_df["emotion"].values:
-                new_mapping = pd.DataFrame([{"emotion": emotion, "response": ai_response}])
-                mapping_df = pd.concat([mapping_df, new_mapping], ignore_index=True)
-                mapping_df.to_csv(mapping_file, index=False)
-        else:
-            pd.DataFrame([{"emotion": emotion, "response": ai_response}]).to_csv(mapping_file, index=False)
-        return True
-    except Exception:
-        return False
-
-
 def add_to_history(field, problem, emotion, confidence, ai_response, bilstm_scores, bert_result=None):
     """Appends interactions to session state for BiLSTM and BERT predictions."""
     bilstm_mixed = get_mixed_emotions(bilstm_scores)
@@ -267,7 +254,7 @@ def add_to_history(field, problem, emotion, confidence, ai_response, bilstm_scor
 
 
 # ============================================
-# 5. SIDEBAR: DASHBOARD
+# 5. SIDEBAR: AUTHENTICATION & DASHBOARD
 # ============================================
 examples_count = 0
 if os.path.exists("emotion_response_examples.csv"):
@@ -277,11 +264,57 @@ if os.path.exists("emotion_response_examples.csv"):
     except Exception:
         examples_count = 55
 
+supabase_active = is_supabase_connected()
+
 with st.sidebar:
-    st.markdown("### 📊 Dashboard")
+    st.markdown("### 👤 Student Account")
+    
+    if st.session_state.user:
+        st.markdown(f"<div class='user-badge'>🎓 <b>Logged in:</b><br>{st.session_state.user['email']}</div>", unsafe_allow_html=True)
+        if st.button("🚪 Log Out", use_container_width=True):
+            sign_out_user()
+            st.session_state.user = None
+            st.success("Logged out successfully.")
+            st.rerun()
+    else:
+        st.markdown("<div class='user-badge'>👤 <b>Mode:</b> Guest / Anonymous</div>", unsafe_allow_html=True)
+        with st.expander("🔑 Sign In / Sign Up", expanded=False):
+            auth_tab1, auth_tab2 = st.tabs(["Log In", "Sign Up"])
+            
+            with auth_tab1:
+                login_email = st.text_input("Email", key="login_email_input")
+                login_pwd = st.text_input("Password", type="password", key="login_pwd_input")
+                if st.button("Sign In", key="btn_signin_submit", use_container_width=True):
+                    if login_email and login_pwd:
+                        ok, msg, udata = sign_in_user(login_email, login_pwd)
+                        if ok:
+                            st.session_state.user = udata
+                            st.success(msg)
+                            st.rerun()
+                        else:
+                            st.error(msg)
+                    else:
+                        st.warning("Please enter your email and password.")
+
+            with auth_tab2:
+                signup_email = st.text_input("Email", key="signup_email_input")
+                signup_pwd = st.text_input("Password", type="password", key="signup_pwd_input")
+                if st.button("Create Account", key="btn_signup_submit", use_container_width=True):
+                    if signup_email and signup_pwd:
+                        ok, msg, udata = sign_up_user(signup_email, signup_pwd)
+                        if ok:
+                            st.success(msg)
+                        else:
+                            st.error(msg)
+                    else:
+                        st.warning("Please provide an email and a secure password.")
+
+    st.markdown("---")
+    st.markdown("### 📊 System Dashboard")
     st.markdown(f"**Models:** ✅ {status_text}")
+    st.markdown(f"**Database:** {'☁️ Supabase PostgreSQL' if supabase_active else '📁 Local CSV'}")
     st.markdown(f"**Total Interactions:** `{len(st.session_state.emotion_history)}`")
-    st.markdown(f"**CSV Examples:** `{examples_count}`")
+    st.markdown(f"**Saved Examples:** `{examples_count}`")
 
     if st.button("Clear History", use_container_width=True):
         st.session_state.emotion_history = []
@@ -307,328 +340,400 @@ st.markdown("""
 
 
 # ============================================
-# 7. INPUT & SETTINGS SECTION
+# 7. MAIN NAVIGATION TABS
 # ============================================
-col1, col2 = st.columns([2.5, 1.3], gap="large")
-
-with col1:
-    st.markdown("#### 📝 Tell us about your learning challenge")
-    
-    fields = [
-        "Computer Science", "Mathematics", "Physics", "Chemistry", "Biology",
-        "Engineering", "Business", "Literature", "History", "Psychology", "Other"
-    ]
-    
-    field = st.selectbox(
-        "What field are you studying?",
-        fields,
-        index=0,
-        help="Select your academic field"
-    )
-
-    def set_example(text: str):
-        st.session_state["input_text"] = text
-
-    problem_text = st.text_area(
-        f"Describe your {field} problem or challenge:",
-        placeholder=f"e.g., 'I'm struggling with algorithms in {field}' or 'This concept is confusing'",
-        height=120,
-        key="input_text"
-    )
-
-    st.markdown("**Quick Examples:**")
-    ex1, ex2, ex3 = st.columns(3)
-    with ex1:
-        st.button(
-            "😕 Confused about recursion",
-            use_container_width=True,
-            on_click=set_example,
-            args=("I'm confused about recursion and how base cases return.",)
-        )
-    with ex2:
-        st.button(
-            "😤 Debugging is frustrating",
-            use_container_width=True,
-            on_click=set_example,
-            args=("Debugging this bug is so frustrating, nothing works no matter what I try.",)
-        )
-    with ex3:
-        st.button(
-            "🧐 Curious about ML",
-            use_container_width=True,
-            on_click=set_example,
-            args=("I'm curious about machine learning and how neural networks learn.",)
-        )
-
-    ex4, ex5, ex6 = st.columns(3)
-    with ex4:
-        st.button(
-            "💪 Solved problems easily",
-            use_container_width=True,
-            on_click=set_example,
-            args=("I solved all the practice problems easily and feel very confident about this chapter!",)
-        )
-    with ex5:
-        st.button(
-            "😐 Lecture is repetitive",
-            use_container_width=True,
-            on_click=set_example,
-            args=("This review lecture is repetitive and boring, I already know all of this material.",)
-        )
-    with ex6:
-        st.button(
-            "🎭 Fascinating but tired",
-            use_container_width=True,
-            on_click=set_example,
-            args=("Ohh! This concept seems fascinating but now I am tired and stuck on details.",)
-        )
-
-with col2:
-    st.markdown("#### ⚙️ Settings")
-    use_ai = st.checkbox("Use AI Response (Gemini)", value=True)
-    save_data = st.checkbox("Save to CSV for learning", value=True)
-    show_details = st.checkbox("Show analysis details", value=True)
-
-    st.markdown("---")
-    st.markdown("#### 📊 Predict from Saved Data")
-    use_csv_prediction = st.checkbox("Use CSV-based prediction", value=False)
-    if use_csv_prediction and examples_count > 0:
-        st.info(f"Using {examples_count} saved examples for prediction")
-
-st.markdown("<div style='height: 6px;'></div>", unsafe_allow_html=True)
-
-# Primary Action Button
-if st.button("🔍 Get AI Learning Help", type="primary", use_container_width=True):
-    active_text = problem_text.strip()
-    if not active_text:
-        st.warning("⚠️ Please describe your problem or select a quick example above.")
-    else:
-        with st.spinner("Analyzing emotion & generating personalized guidance..."):
-            t0 = time.time()
-            
-            # 1. Inference BiLSTM
-            bilstm_res = bilstm_model.predict(active_text) if bilstm_model else {
-                "emotion": "Confused", "confidence": 0.5,
-                "scores": {"Bored": 0.1, "Confident": 0.1, "Confused": 0.6, "Curious": 0.1, "Frustrated": 0.1},
-                "cleaned_text": active_text
-            }
-            
-            # 2. Inference MiniLM BERT
-            bert_res = bert_model.predict(active_text) if bert_model else None
-
-            primary_emotion = bilstm_res["emotion"]
-            primary_confidence = bilstm_res["confidence"]
-
-            # 3. Response generation
-            ai_resp = get_gemini_response(
-                field=field,
-                problem=active_text,
-                emotion=primary_emotion,
-                confidence=primary_confidence,
-                use_ai=use_ai,
-                persona="Socratic Mentor"
-            )
-
-            # 4. CSV persistence
-            if save_data:
-                save_to_csv(field, active_text, primary_emotion, primary_confidence, ai_resp)
-
-            # 5. History logging
-            add_to_history(
-                field, active_text, primary_emotion, primary_confidence,
-                ai_resp, bilstm_res["scores"], bert_res
-            )
-
-            latency = (time.time() - t0) * 1000
-
-            st.session_state.last_analysis = {
-                "field": field,
-                "problem": active_text,
-                "bilstm_result": bilstm_res,
-                "bert_result": bert_res,
-                "ai_response": ai_resp,
-                "use_ai": use_ai,
-                "latency": latency,
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            }
+main_tab1, main_tab2, main_tab3 = st.tabs([
+    "🤖 Learning Assistant",
+    "📊 Analytics & Journey",
+    "📝 Student Feedback"
+])
 
 
 # ============================================
-# 8. RESULTS & MODEL COMPARISON SECTION
+# TAB 1: LEARNING ASSISTANT
 # ============================================
-if st.session_state.last_analysis is not None:
-    res = st.session_state.last_analysis
-    b_res = res["bilstm_result"]
-    bert_res = res["bert_result"]
-    p_emotion = b_res["emotion"]
-    p_conf = b_res["confidence"]
-    strategy_text = EMOTION_RESPONSES.get(p_emotion, {}).get("action", "Provide step-by-step clarity")
+with main_tab1:
+    col1, col2 = st.columns([2.5, 1.3], gap="large")
 
-    st.markdown("---")
-    st.markdown("### 🔬 Model Predictions Comparison")
-
-    col_m1, col_m2 = st.columns(2, gap="large")
-
-    # Left Column: BiLSTM
-    with col_m1:
-        st.markdown("##### BiLSTM Student Adaptive")
-        st.caption("Mixed Emotions")
+    with col1:
+        st.markdown("#### 📝 Tell us about your learning challenge")
         
-        b_mixed = get_mixed_emotions(b_res["scores"])
-        if len(b_mixed) > 1:
-            mixed_header = " + ".join([f"{EMOTION_RESPONSES.get(em[0], {}).get('emoji', '🎯')} {em[0]}" for em in b_mixed])
-            st.markdown(f"<div class='mixed-emotion-title'>{mixed_header}</div>", unsafe_allow_html=True)
-            st.markdown(f"<div class='primary-metric-sub'>↑ Primary: {b_mixed[0][1]:.1%}</div>", unsafe_allow_html=True)
+        fields = [
+            "Computer Science", "Mathematics", "Physics", "Chemistry", "Biology",
+            "Engineering", "Business", "Literature", "History", "Psychology", "Other"
+        ]
+        
+        field = st.selectbox(
+            "What field are you studying?",
+            fields,
+            index=0,
+            help="Select your academic field"
+        )
+
+        def set_example(text: str):
+            st.session_state["input_text"] = text
+
+        problem_text = st.text_area(
+            f"Describe your {field} problem or challenge:",
+            placeholder=f"e.g., 'I'm struggling with algorithms in {field}' or 'This concept is confusing'",
+            height=120,
+            key="input_text"
+        )
+
+        st.markdown("**Quick Examples:**")
+        ex1, ex2, ex3 = st.columns(3)
+        with ex1:
+            st.button(
+                "😕 Confused about recursion",
+                use_container_width=True,
+                on_click=set_example,
+                args=("I'm confused about recursion and how base cases return.",)
+            )
+        with ex2:
+            st.button(
+                "😤 Debugging is frustrating",
+                use_container_width=True,
+                on_click=set_example,
+                args=("Debugging this bug is so frustrating, nothing works no matter what I try.",)
+            )
+        with ex3:
+            st.button(
+                "🧐 Curious about ML",
+                use_container_width=True,
+                on_click=set_example,
+                args=("I'm curious about machine learning and how neural networks learn.",)
+            )
+
+        ex4, ex5, ex6 = st.columns(3)
+        with ex4:
+            st.button(
+                "💪 Solved problems easily",
+                use_container_width=True,
+                on_click=set_example,
+                args=("I solved all the practice problems easily and feel very confident about this chapter!",)
+            )
+        with ex5:
+            st.button(
+                "😐 Lecture is repetitive",
+                use_container_width=True,
+                on_click=set_example,
+                args=("This review lecture is repetitive and boring, I already know all of this material.",)
+            )
+        with ex6:
+            st.button(
+                "🎭 Fascinating but tired",
+                use_container_width=True,
+                on_click=set_example,
+                args=("Ohh! This concept seems fascinating but now I am tired and stuck on details.",)
+            )
+
+    with col2:
+        st.markdown("#### ⚙️ Settings")
+        use_ai = st.checkbox("Use AI Response (Gemini)", value=True)
+        save_data = st.checkbox("Save to Database / CSV", value=True)
+        show_details = st.checkbox("Show analysis details", value=True)
+
+        st.markdown("---")
+        st.markdown("#### 📊 Predict from Saved Data")
+        use_csv_prediction = st.checkbox("Use CSV-based prediction", value=False)
+        if use_csv_prediction and examples_count > 0:
+            st.info(f"Using {examples_count} saved examples for prediction")
+
+    st.markdown("<div style='height: 6px;'></div>", unsafe_allow_html=True)
+
+    # Primary Action Button
+    if st.button("🔍 Get AI Learning Help", type="primary", use_container_width=True):
+        active_text = problem_text.strip()
+        if not active_text:
+            st.warning("⚠️ Please describe your problem or select a quick example above.")
         else:
-            emoji = EMOTION_RESPONSES.get(p_emotion, {}).get("emoji", "🎯")
-            st.markdown(f"<div class='mixed-emotion-title'>{emoji} {p_emotion}</div>", unsafe_allow_html=True)
-            st.markdown(f"<div class='primary-metric-sub'>↑ Primary: {p_conf:.1%}</div>", unsafe_allow_html=True)
+            with st.spinner("Analyzing emotion & generating personalized guidance..."):
+                t0 = time.time()
+                
+                # 1. Inference BiLSTM
+                bilstm_res = bilstm_model.predict(active_text) if bilstm_model else {
+                    "emotion": "Confused", "confidence": 0.5,
+                    "scores": {"Bored": 0.1, "Confident": 0.1, "Confused": 0.6, "Curious": 0.1, "Frustrated": 0.1},
+                    "cleaned_text": active_text
+                }
+                
+                # 2. Inference MiniLM BERT
+                bert_res = bert_model.predict(active_text) if bert_model else None
 
-        for em_name, em_val in sorted(b_res["scores"].items(), key=lambda x: x[1], reverse=True):
-            st.caption(f"{em_name}: {em_val:.1%}")
-            st.progress(float(em_val))
+                primary_emotion = bilstm_res["emotion"]
+                primary_confidence = bilstm_res["confidence"]
 
-    # Right Column: BERT
-    with col_m2:
-        st.markdown("##### BERT Transformer")
-        st.caption("Mixed Emotions")
+                # 3. Response generation
+                ai_resp = get_gemini_response(
+                    field=field,
+                    problem=active_text,
+                    emotion=primary_emotion,
+                    confidence=primary_confidence,
+                    use_ai=use_ai,
+                    persona="Socratic Mentor"
+                )
 
-        if bert_res:
-            t_mixed = get_mixed_emotions(bert_res["scores"])
-            if len(t_mixed) > 1:
-                t_mixed_header = " + ".join([f"{EMOTION_RESPONSES.get(em[0], {}).get('emoji', '🎯')} {em[0]}" for em in t_mixed])
-                st.markdown(f"<div class='mixed-emotion-title'>{t_mixed_header}</div>", unsafe_allow_html=True)
-                st.markdown(f"<div class='primary-metric-sub'>↑ Primary: {t_mixed[0][1]:.1%}</div>", unsafe_allow_html=True)
+                # 4. Database & CSV Persistence
+                current_user_id = st.session_state.user["email"] if st.session_state.user else "guest_student"
+                if save_data:
+                    log_student_interaction(
+                        user_id=current_user_id,
+                        field=field,
+                        problem_text=active_text,
+                        emotion=primary_emotion,
+                        confidence=primary_confidence,
+                        scores=bilstm_res["scores"],
+                        response=ai_resp,
+                        model="BiLSTM"
+                    )
+
+                # 5. History logging
+                add_to_history(
+                    field, active_text, primary_emotion, primary_confidence,
+                    ai_resp, bilstm_res["scores"], bert_res
+                )
+
+                latency = (time.time() - t0) * 1000
+
+                st.session_state.last_analysis = {
+                    "field": field,
+                    "problem": active_text,
+                    "bilstm_result": bilstm_res,
+                    "bert_result": bert_res,
+                    "ai_response": ai_resp,
+                    "use_ai": use_ai,
+                    "latency": latency,
+                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                }
+
+    # Results & Model Comparison Section
+    if st.session_state.last_analysis is not None:
+        res = st.session_state.last_analysis
+        b_res = res["bilstm_result"]
+        bert_res = res["bert_result"]
+        p_emotion = b_res["emotion"]
+        p_conf = b_res["confidence"]
+        strategy_text = EMOTION_RESPONSES.get(p_emotion, {}).get("action", "Provide step-by-step clarity")
+
+        st.markdown("---")
+        st.markdown("### 🔬 Model Predictions Comparison")
+
+        col_m1, col_m2 = st.columns(2, gap="large")
+
+        # Left Column: BiLSTM
+        with col_m1:
+            st.markdown("##### BiLSTM Student Adaptive")
+            st.caption("Mixed Emotions")
+            
+            b_mixed = get_mixed_emotions(b_res["scores"])
+            if len(b_mixed) > 1:
+                mixed_header = " + ".join([f"{EMOTION_RESPONSES.get(em[0], {}).get('emoji', '🎯')} {em[0]}" for em in b_mixed])
+                st.markdown(f"<div class='mixed-emotion-title'>{mixed_header}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='primary-metric-sub'>↑ Primary: {b_mixed[0][1]:.1%}</div>", unsafe_allow_html=True)
             else:
-                t_emoji = EMOTION_RESPONSES.get(bert_res["emotion"], {}).get("emoji", "🎯")
-                st.markdown(f"<div class='mixed-emotion-title'>{t_emoji} {bert_res['emotion']}</div>", unsafe_allow_html=True)
-                st.markdown(f"<div class='primary-metric-sub'>↑ Primary: {bert_res['confidence']:.1%}</div>", unsafe_allow_html=True)
+                emoji = EMOTION_RESPONSES.get(p_emotion, {}).get("emoji", "🎯")
+                st.markdown(f"<div class='mixed-emotion-title'>{emoji} {p_emotion}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='primary-metric-sub'>↑ Primary: {p_conf:.1%}</div>", unsafe_allow_html=True)
 
-            for em_name, em_val in sorted(bert_res["scores"].items(), key=lambda x: x[1], reverse=True):
+            for em_name, em_val in sorted(b_res["scores"].items(), key=lambda x: x[1], reverse=True):
                 st.caption(f"{em_name}: {em_val:.1%}")
                 st.progress(float(em_val))
-        else:
-            st.info("BERT model loaded on-demand.")
 
-    # AI Learning Assistant Response Card matching screenshot
-    st.markdown("---")
-    st.markdown("### 🤖 AI Learning Assistant Response")
-    st.markdown(f"""
-    <div class="response-container">
-        <div class="response-header-chip">
-            💡 AI Response based on BiLSTM prediction: {p_emotion}
-        </div>
-        <div style="font-size: 1.02rem; line-height: 1.6; color: #F8FAFC; margin-bottom: 20px;">
-            {res['ai_response']}
-        </div>
-        <div style="margin-top: 14px;">
-            <h4 style="color: #FFFFFF; margin-bottom: 4px;">📖 Additional Support</h4>
-            <div class="strategy-pill">Strategy: {strategy_text}</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+        # Right Column: BERT
+        with col_m2:
+            st.markdown("##### BERT Transformer")
+            st.caption("Mixed Emotions")
 
-    # Analysis Details Expander matching screenshot
-    if show_details:
-        with st.expander("🔍 Analysis Details", expanded=False):
-            st.markdown(f"**Original Problem:** {res['problem']}")
-            st.markdown(f"**BiLSTM Processed:** {b_res['cleaned_text']}")
-            st.markdown(f"**BiLSTM Confidence:** {b_res['confidence']:.3f}")
-            st.markdown(f"**AI Model:** {'Gemini 2.5 Flash' if res['use_ai'] else 'Offline Fallback'}")
-            st.markdown(f"**Timestamp:** {res['timestamp']}")
+            if bert_res:
+                t_mixed = get_mixed_emotions(bert_res["scores"])
+                if len(t_mixed) > 1:
+                    t_mixed_header = " + ".join([f"{EMOTION_RESPONSES.get(em[0], {}).get('emoji', '🎯')} {em[0]}" for em in t_mixed])
+                    st.markdown(f"<div class='mixed-emotion-title'>{t_mixed_header}</div>", unsafe_allow_html=True)
+                    st.markdown(f"<div class='primary-metric-sub'>↑ Primary: {t_mixed[0][1]:.1%}</div>", unsafe_allow_html=True)
+                else:
+                    t_emoji = EMOTION_RESPONSES.get(bert_res["emotion"], {}).get("emoji", "🎯")
+                    st.markdown(f"<div class='mixed-emotion-title'>{t_emoji} {bert_res['emotion']}</div>", unsafe_allow_html=True)
+                    st.markdown(f"<div class='primary-metric-sub'>↑ Primary: {bert_res['confidence']:.1%}</div>", unsafe_allow_html=True)
+
+                for em_name, em_val in sorted(bert_res["scores"].items(), key=lambda x: x[1], reverse=True):
+                    st.caption(f"{em_name}: {em_val:.1%}")
+                    st.progress(float(em_val))
+            else:
+                st.info("BERT model loaded on-demand.")
+
+        # AI Learning Assistant Response Card
+        st.markdown("---")
+        st.markdown("### 🤖 AI Learning Assistant Response")
+        st.markdown(f"""
+        <div class="response-container">
+            <div class="response-header-chip">
+                💡 AI Response based on BiLSTM prediction: {p_emotion}
+            </div>
+            <div style="font-size: 1.02rem; line-height: 1.6; color: #F8FAFC; margin-bottom: 20px;">
+                {res['ai_response']}
+            </div>
+            <div style="margin-top: 14px;">
+                <h4 style="color: #FFFFFF; margin-bottom: 4px;">📖 Additional Support</h4>
+                <div class="strategy-pill">Strategy: {strategy_text}</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Analysis Details Expander
+        if show_details:
+            with st.expander("🔍 Analysis Details", expanded=False):
+                st.markdown(f"**Original Problem:** {res['problem']}")
+                st.markdown(f"**BiLSTM Processed:** {b_res['cleaned_text']}")
+                st.markdown(f"**BiLSTM Confidence:** {b_res['confidence']:.3f}")
+                st.markdown(f"**AI Model:** {'Gemini 2.5 Flash' if res['use_ai'] else 'Offline Fallback'}")
+                st.markdown(f"**Inference Latency:** `{res['latency']:.1f} ms`")
+                st.markdown(f"**Timestamp:** {res['timestamp']}")
 
 
 # ============================================
-# 9. ANALYTICS DASHBOARD TABS
+# TAB 2: ANALYTICS & JOURNEY
 # ============================================
-if st.session_state.emotion_history:
-    st.markdown("---")
-    df_history = pd.DataFrame(st.session_state.emotion_history)
+with main_tab2:
+    st.markdown("### 📊 Learning Analytics & Emotional Journey")
+    
+    if st.session_state.emotion_history:
+        df_history = pd.DataFrame(st.session_state.emotion_history)
 
-    tab1, tab2, tab3 = st.tabs(["Emotions", "Fields", "Summary"])
+        sub_tab1, sub_tab2, sub_tab3 = st.tabs(["Emotions Breakdown", "Study Fields", "Interaction Logs"])
 
-    # Tab 1: Emotions (Pie & Timeline Line Chart)
-    with tab1:
-        col_c1, col_c2 = st.columns(2)
-        with col_c1:
-            emotion_counts = df_history["emotion"].value_counts()
-            fig1 = px.pie(
-                values=emotion_counts.values,
-                names=emotion_counts.index,
-                title="Emotion Distribution",
-                color_discrete_sequence=px.colors.qualitative.Pastel
-            )
-            fig1.update_layout(
+        # Sub Tab 1: Emotions
+        with sub_tab1:
+            col_c1, col_c2 = st.columns(2)
+            with col_c1:
+                emotion_counts = df_history["emotion"].value_counts()
+                fig1 = px.pie(
+                    values=emotion_counts.values,
+                    names=emotion_counts.index,
+                    title="Overall Emotion Distribution",
+                    color_discrete_sequence=px.colors.qualitative.Pastel
+                )
+                fig1.update_layout(
+                    template="plotly_dark",
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    plot_bgcolor="rgba(0,0,0,0)",
+                    margin=dict(l=20, r=20, t=40, b=20)
+                )
+                st.plotly_chart(fig1, use_container_width=True)
+
+            with col_c2:
+                df_copy = df_history.copy()
+                df_copy["time"] = df_copy["timestamp"].apply(
+                    lambda t: t.strftime("%H:%M:%S") if hasattr(t, "strftime") else str(t)[11:19]
+                )
+                fig2 = px.line(
+                    df_copy,
+                    x="time",
+                    y="confidence",
+                    color="emotion",
+                    markers=True,
+                    title="Confidence & Emotional Trajectory",
+                    color_discrete_sequence=px.colors.qualitative.Safe
+                )
+                fig2.update_layout(
+                    template="plotly_dark",
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    plot_bgcolor="rgba(0,0,0,0)",
+                    yaxis=dict(tickformat=".0%"),
+                    margin=dict(l=20, r=20, t=40, b=20)
+                )
+                st.plotly_chart(fig2, use_container_width=True)
+
+        # Sub Tab 2: Fields
+        with sub_tab2:
+            if "model" in df_history.columns and df_history["model"].nunique() > 1:
+                field_emotion = df_history.groupby(["field", "emotion", "model"]).size().reset_index(name="count")
+                fig3 = px.bar(
+                    field_emotion,
+                    x="field",
+                    y="count",
+                    color="emotion",
+                    facet_col="model",
+                    title="Emotions by Academic Field & Model",
+                    color_discrete_sequence=px.colors.qualitative.Vivid
+                )
+            else:
+                field_emotion = df_history.groupby(["field", "emotion"]).size().reset_index(name="count")
+                fig3 = px.bar(
+                    field_emotion,
+                    x="field",
+                    y="count",
+                    color="emotion",
+                    title="Emotions by Academic Field",
+                    color_discrete_sequence=px.colors.qualitative.Vivid
+                )
+
+            fig3.update_layout(
                 template="plotly_dark",
                 paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(0,0,0,0)",
                 margin=dict(l=20, r=20, t=40, b=20)
             )
-            st.plotly_chart(fig1, use_container_width=True)
+            st.plotly_chart(fig3, use_container_width=True)
 
-        with col_c2:
-            df_copy = df_history.copy()
-            df_copy["time"] = df_copy["timestamp"].apply(
-                lambda t: t.strftime("%H:%M:%S") if hasattr(t, "strftime") else str(t)[11:19]
-            )
-            fig2 = px.line(
-                df_copy,
-                x="time",
-                y="confidence",
-                color="emotion",
-                markers=True,
-                title="Emotional Journey",
-                color_discrete_sequence=px.colors.qualitative.Safe
-            )
-            fig2.update_layout(
-                template="plotly_dark",
-                paper_bgcolor="rgba(0,0,0,0)",
-                plot_bgcolor="rgba(0,0,0,0)",
-                yaxis=dict(tickformat=".0%"),
-                margin=dict(l=20, r=20, t=40, b=20)
-            )
-            st.plotly_chart(fig2, use_container_width=True)
+        # Sub Tab 3: Logs Table & Summary Metrics
+        with sub_tab3:
+            s1, s2, s3 = st.columns(3)
+            s1.metric("Total Session Queries", len(df_history))
+            s2.metric("Dominant Emotion", df_history["emotion"].mode()[0] if not df_history.empty else "N/A")
+            s3.metric("Average Confidence", f"{df_history['confidence'].mean():.1%}")
 
-    # Tab 2: Fields (Bar Chart faceted by model)
-    with tab2:
-        if "model" in df_history.columns and df_history["model"].nunique() > 1:
-            field_emotion = df_history.groupby(["field", "emotion", "model"]).size().reset_index(name="count")
-            fig3 = px.bar(
-                field_emotion,
-                x="field",
-                y="count",
-                color="emotion",
-                facet_col="model",
-                title="Emotions by Study Field & Model",
-                color_discrete_sequence=px.colors.qualitative.Vivid
+            st.markdown("#### Detailed Interaction Records")
+            cols_to_show = [c for c in ["timestamp", "field", "emotion", "confidence", "model", "problem"] if c in df_history.columns]
+            st.dataframe(df_history[cols_to_show], use_container_width=True)
+    else:
+        st.info("💡 No interactions recorded yet in this session. Try asking a question or clicking a quick example in the Learning Assistant tab!")
+
+
+# ============================================
+# TAB 3: STUDENT FEEDBACK FORM
+# ============================================
+with main_tab3:
+    st.markdown("### 📝 Student Feedback & Model Improvement")
+    st.markdown("Your feedback helps our AI pedagogical model adapt and understand learning challenges better.")
+
+    with st.form("student_feedback_form"):
+        col_f1, col_f2 = st.columns(2)
+        
+        with col_f1:
+            feedback_rating = st.slider("⭐ How helpful was the AI explanation?", min_value=1, max_value=5, value=5)
+            feedback_helpful = st.radio("Did this guidance help resolve your learning doubt?", ["Yes, completely", "Partially", "No, still stuck"], horizontal=True)
+
+        with col_f2:
+            feedback_emotion_acc = st.selectbox(
+                "Did the model detect your emotional state correctly?",
+                ["Yes, accurately detected", "Somewhat accurate", "No, I felt differently"]
             )
-        else:
-            field_emotion = df_history.groupby(["field", "emotion"]).size().reset_index(name="count")
-            fig3 = px.bar(
-                field_emotion,
-                x="field",
-                y="count",
-                color="emotion",
-                title="Emotions by Study Field",
-                color_discrete_sequence=px.colors.qualitative.Vivid
+            feedback_category = st.selectbox(
+                "Feedback Category",
+                ["Pedagogical Guidance Quality", "Emotion Accuracy", "UI & Usability", "Concept Explanation", "Other"]
             )
 
-        fig3.update_layout(
-            template="plotly_dark",
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
-            margin=dict(l=20, r=20, t=40, b=20)
+        feedback_comments = st.text_area(
+            "Additional Comments or Suggestions (Optional):",
+            placeholder="Tell us what worked well or what we can improve in the explanation..."
         )
-        st.plotly_chart(fig3, use_container_width=True)
 
-    # Tab 3: Summary
-    with tab3:
-        st.markdown("#### Overall Statistics")
-        s1, s2, s3 = st.columns(3)
-        s1.metric("Total Interactions", len(df_history))
-        s2.metric("Most Frequent Emotion", df_history["emotion"].mode()[0] if not df_history.empty else "N/A")
-        s3.metric("Average Confidence", f"{df_history['confidence'].mean():.1%}")
+        submit_feedback = st.form_submit_button("🚀 Submit Feedback", type="primary")
 
-        st.markdown("#### Detailed Interaction Logs")
-        cols_to_show = [c for c in ["timestamp", "field", "emotion", "confidence", "model"] if c in df_history.columns]
-        st.dataframe(df_history[cols_to_show], use_container_width=True)
+        if submit_feedback:
+            current_user = st.session_state.user["email"] if st.session_state.user else "guest_student"
+            is_helpful_bool = True if feedback_helpful.startswith("Yes") else False
+            
+            saved_to_db, fb_msg = log_student_feedback(
+                user_id=current_user,
+                rating=feedback_rating,
+                was_helpful=is_helpful_bool,
+                emotion_accurate=feedback_emotion_acc,
+                comments=feedback_comments,
+                category=feedback_category
+            )
+            
+            if saved_to_db:
+                st.success("🎉 Thank you! Your feedback has been saved to the database.")
+            else:
+                st.success(f"🎉 {fb_msg}")
